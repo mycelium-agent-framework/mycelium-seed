@@ -1,0 +1,8 @@
+{
+  "agent_name": "{{AGENT_NAME}}",
+  "version": "0.1.0",
+  "pops": [],
+  "rings": [],
+  "channels": [],
+  "active_ring": null
+}

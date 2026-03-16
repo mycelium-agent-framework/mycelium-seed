@@ -1,0 +1,208 @@
+{
+  "$defs": {
+    "ChannelState": {
+      "description": "Tracking state for an active channel.",
+      "properties": {
+        "name": {
+          "description": "Channel name",
+          "title": "Name",
+          "type": "string"
+        },
+        "ring": {
+          "description": "Which ring this channel belongs to",
+          "title": "Ring",
+          "type": "string"
+        },
+        "last_active": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Last activity in this channel",
+          "title": "Last Active"
+        },
+        "is_active": {
+          "default": true,
+          "description": "Whether this channel is currently active",
+          "title": "Is Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "ring"
+      ],
+      "title": "ChannelState",
+      "type": "object"
+    },
+    "PopCapability": {
+      "enum": [
+        "voice",
+        "text",
+        "system_audio",
+        "local_llm",
+        "metabolic_core"
+      ],
+      "title": "PopCapability",
+      "type": "string"
+    },
+    "PopEntry": {
+      "description": "A Point of Presence (device) registered in the manifest.",
+      "properties": {
+        "device_id": {
+          "description": "Unique device identifier e.g. osx-desktop",
+          "title": "Device Id",
+          "type": "string"
+        },
+        "display_name": {
+          "description": "Human-readable device name",
+          "title": "Display Name",
+          "type": "string"
+        },
+        "capabilities": {
+          "description": "What this device can do",
+          "items": {
+            "$ref": "#/$defs/PopCapability"
+          },
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "last_active": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Last activity timestamp",
+          "title": "Last Active"
+        },
+        "allowed_rings": {
+          "description": "Ring repo names this PoP can access",
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Rings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "device_id",
+        "display_name"
+      ],
+      "title": "PopEntry",
+      "type": "object"
+    },
+    "RingEntry": {
+      "description": "A ring (context boundary) known to Ring 0.",
+      "properties": {
+        "name": {
+          "description": "Ring identifier e.g. vivian-main",
+          "title": "Name",
+          "type": "string"
+        },
+        "repo_url": {
+          "description": "Git remote URL",
+          "title": "Repo Url",
+          "type": "string"
+        },
+        "local_path_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Suggested local clone path",
+          "title": "Local Path Hint"
+        },
+        "access_rules": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": "Mapping of PoP device_id to allowed operations e.g. {\"osx-desktop\": [\"read\", \"write\"]}",
+          "title": "Access Rules",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "repo_url"
+      ],
+      "title": "RingEntry",
+      "type": "object"
+    }
+  },
+  "description": "Ring 0 manifest \u2014 the switchboard for the agent's distributed state.",
+  "properties": {
+    "agent_name": {
+      "description": "Name of the agent instance e.g. Vivian",
+      "title": "Agent Name",
+      "type": "string"
+    },
+    "version": {
+      "default": "0.1.0",
+      "description": "Manifest schema version",
+      "title": "Version",
+      "type": "string"
+    },
+    "pops": {
+      "description": "Registered Points of Presence",
+      "items": {
+        "$ref": "#/$defs/PopEntry"
+      },
+      "title": "Pops",
+      "type": "array"
+    },
+    "rings": {
+      "description": "Known rings",
+      "items": {
+        "$ref": "#/$defs/RingEntry"
+      },
+      "title": "Rings",
+      "type": "array"
+    },
+    "channels": {
+      "description": "Active channel states",
+      "items": {
+        "$ref": "#/$defs/ChannelState"
+      },
+      "title": "Channels",
+      "type": "array"
+    },
+    "active_ring": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Currently mounted ring name",
+      "title": "Active Ring"
+    }
+  },
+  "required": [
+    "agent_name"
+  ],
+  "title": "Manifest",
+  "type": "object"
+}

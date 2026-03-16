@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Mycelium pre-commit hook — validates JSONL files against JSON Schema
+set -euo pipefail
+
+SCHEMA_DIR="$(git rev-parse --show-toplevel)/schemas"
+ERRORS=0
+
+validate_jsonl() {
+    local file="$1"
+    local schema="$2"
+    local line_num=0
+
+    if [ ! -f "$schema" ]; then
+        echo "WARNING: Schema not found: $schema (skipping validation for $file)"
+        return 0
+    fi
+
+    while IFS= read -r line; do
+        line_num=$((line_num + 1))
+        if [ -z "$line" ]; then
+            continue
+        fi
+        # Validate JSON syntax
+        if ! echo "$line" | python3 -c "import sys, json; json.load(sys.stdin)" 2>/dev/null; then
+            echo "ERROR: Invalid JSON in $file:$line_num"
+            ERRORS=$((ERRORS + 1))
+        fi
+    done < "$file"
+}
+
+# Validate memory JSONL files
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.mycelium/memory-.*\.jsonl$' || true); do
+    echo "Validating $file..."
+    validate_jsonl "$file" "$SCHEMA_DIR/spore.schema.json"
+done
+
+# Validate transcript JSONL files
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E 'channels/.*/transcript-.*\.jsonl$' || true); do
+    echo "Validating $file..."
+    validate_jsonl "$file" "$SCHEMA_DIR/transcript.schema.json"
+done
+
+if [ "$ERRORS" -gt 0 ]; then
+    echo "Pre-commit validation failed with $ERRORS error(s)."
+    exit 1
+fi

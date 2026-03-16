@@ -1,0 +1,49 @@
+{
+  "$defs": {
+    "TranscriptRole": {
+      "enum": [
+        "user",
+        "model",
+        "system"
+      ],
+      "title": "TranscriptRole",
+      "type": "string"
+    }
+  },
+  "description": "Single turn in a channel transcript.",
+  "properties": {
+    "timestamp": {
+      "description": "When this turn occurred (UTC)",
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/TranscriptRole",
+      "description": "Who produced this turn"
+    },
+    "text": {
+      "description": "Content of the turn",
+      "title": "Text",
+      "type": "string"
+    },
+    "is_final": {
+      "default": true,
+      "description": "False for partial/streaming results",
+      "title": "Is Final",
+      "type": "boolean"
+    },
+    "origin_pop": {
+      "description": "Device ID that recorded this turn",
+      "title": "Origin Pop",
+      "type": "string"
+    }
+  },
+  "required": [
+    "role",
+    "text",
+    "origin_pop"
+  ],
+  "title": "TranscriptEntry",
+  "type": "object"
+}

@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Mycelium post-checkout hook — rehydrates SQLite index from JSONL sources
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+INDEX_DB="$REPO_ROOT/.mycelium/index.sqlite"
+
+echo "Rehydrating mycelium index from JSONL..."
+
+python3 - "$REPO_ROOT" "$INDEX_DB" << 'PYTHON'
+import glob
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+db_path = Path(sys.argv[2])
+
+conn = sqlite3.connect(str(db_path))
+conn.execute("PRAGMA journal_mode=WAL")
+
+# Create tables
+conn.executescript("""
+    CREATE TABLE IF NOT EXISTS spores (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        parent_id TEXT,
+        channel TEXT NOT NULL,
+        content TEXT NOT NULL,
+        context_recap TEXT,
+        tags TEXT,  -- JSON array
+        metadata TEXT,  -- JSON object
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        origin_pop TEXT NOT NULL,
+        source_file TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS transcripts (
+        rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        role TEXT NOT NULL,
+        text TEXT NOT NULL,
+        is_final INTEGER NOT NULL DEFAULT 1,
+        origin_pop TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        source_file TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_spores_channel ON spores(channel);
+    CREATE INDEX IF NOT EXISTS idx_spores_type ON spores(type);
+    CREATE INDEX IF NOT EXISTS idx_spores_status ON spores(status);
+    CREATE INDEX IF NOT EXISTS idx_spores_origin ON spores(origin_pop);
+    CREATE INDEX IF NOT EXISTS idx_transcripts_channel ON transcripts(channel);
+    CREATE INDEX IF NOT EXISTS idx_transcripts_timestamp ON transcripts(timestamp);
+""")
+
+# Clear and rebuild
+conn.execute("DELETE FROM spores")
+conn.execute("DELETE FROM transcripts")
+
+# Ingest memory files
+for jsonl_file in glob.glob(str(repo_root / ".mycelium" / "memory-*.jsonl")):
+    source = Path(jsonl_file).name
+    with open(jsonl_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                spore = json.loads(line)
+                conn.execute(
+                    """INSERT OR REPLACE INTO spores
+                       (id, type, status, parent_id, channel, content, context_recap,
+                        tags, metadata, created_at, updated_at, origin_pop, source_file)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        spore["id"], spore["type"], spore.get("status", "open"),
+                        spore.get("parent_id"), spore.get("channel", "default"),
+                        spore["content"], spore.get("context_recap"),
+                        json.dumps(spore.get("tags", [])),
+                        json.dumps(spore.get("metadata", {})),
+                        spore["created_at"], spore["updated_at"],
+                        spore["origin_pop"], source,
+                    ),
+                )
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"  WARNING: skipping malformed spore in {source}: {e}")
+
+# Ingest transcript files
+for jsonl_file in glob.glob(str(repo_root / "channels" / "*" / "transcript-*.jsonl")):
+    path = Path(jsonl_file)
+    channel = path.parent.name
+    source = path.name
+    with open(jsonl_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+                conn.execute(
+                    """INSERT INTO transcripts
+                       (timestamp, role, text, is_final, origin_pop, channel, source_file)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        entry["timestamp"], entry["role"], entry["text"],
+                        1 if entry.get("is_final", True) else 0,
+                        entry["origin_pop"], channel, source,
+                    ),
+                )
+            except (json.JSONDecodeError, KeyError) as e:
+                print(f"  WARNING: skipping malformed transcript in {source}: {e}")
+
+conn.commit()
+
+spore_count = conn.execute("SELECT COUNT(*) FROM spores").fetchone()[0]
+transcript_count = conn.execute("SELECT COUNT(*) FROM transcripts").fetchone()[0]
+conn.close()
+
+print(f"  Index rebuilt: {spore_count} spores, {transcript_count} transcript entries")
+PYTHON

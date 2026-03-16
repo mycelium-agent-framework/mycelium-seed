@@ -1,0 +1,22 @@
+# SQLite index (rebuilt from JSONL)
+.mycelium/index.sqlite
+.mycelium/index.sqlite-wal
+.mycelium/index.sqlite-shm
+
+# macOS
+.DS_Store
+
+# Agent file copies (rebuilt by make setup)
+.claude/agents/
+.claude/skills/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+.venv/

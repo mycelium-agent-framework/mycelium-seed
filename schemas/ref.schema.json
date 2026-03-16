@@ -1,0 +1,92 @@
+{
+  "description": "Reference to an external artifact (ambient transcript, document, etc.).",
+  "properties": {
+    "ref_id": {
+      "description": "Unique reference ID",
+      "title": "Ref Id",
+      "type": "string"
+    },
+    "source": {
+      "description": "Origin of the artifact e.g. system-audio, google-drive, manual",
+      "title": "Source",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "When the artifact was captured",
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "duration": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Duration in seconds (for audio/video)",
+      "title": "Duration"
+    },
+    "transcript": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Full transcript text if available",
+      "title": "Transcript"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "AI-generated summary",
+      "title": "Summary"
+    },
+    "channel_link": {
+      "default": "default",
+      "description": "Channel this artifact is associated with",
+      "title": "Channel Link",
+      "type": "string"
+    },
+    "speakers": {
+      "description": "Identified speakers",
+      "items": {
+        "type": "string"
+      },
+      "title": "Speakers",
+      "type": "array"
+    },
+    "drive_file_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Google Drive file ID if applicable",
+      "title": "Drive File Id"
+    }
+  },
+  "required": [
+    "source"
+  ],
+  "title": "RefFile",
+  "type": "object"
+}

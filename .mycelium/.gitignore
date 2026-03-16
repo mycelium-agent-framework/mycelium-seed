@@ -1,0 +1,4 @@
+# SQLite index is rebuilt from JSONL on launch — never committed
+index.sqlite
+index.sqlite-wal
+index.sqlite-shm

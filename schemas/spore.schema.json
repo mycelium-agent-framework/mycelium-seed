@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "SporeStatus": {
+      "enum": [
+        "open",
+        "in_progress",
+        "blocked",
+        "done",
+        "archived"
+      ],
+      "title": "SporeStatus",
+      "type": "string"
+    },
+    "SporeType": {
+      "enum": [
+        "task",
+        "note",
+        "discovery",
+        "decision",
+        "handoff"
+      ],
+      "title": "SporeType",
+      "type": "string"
+    }
+  },
+  "description": "Atomic memory unit in the mycelium network.",
+  "properties": {
+    "id": {
+      "description": "Unique spore identifier (UUID)",
+      "title": "Id",
+      "type": "string"
+    },
+    "type": {
+      "$ref": "#/$defs/SporeType",
+      "description": "Classification of this memory unit"
+    },
+    "status": {
+      "$ref": "#/$defs/SporeStatus",
+      "default": "open",
+      "description": "Lifecycle status"
+    },
+    "parent_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ID of parent spore for threading",
+      "title": "Parent Id"
+    },
+    "blocked_by": {
+      "description": "IDs of spores blocking this one",
+      "items": {
+        "type": "string"
+      },
+      "title": "Blocked By",
+      "type": "array"
+    },
+    "channel": {
+      "default": "default",
+      "description": "Channel this spore belongs to",
+      "title": "Channel",
+      "type": "string"
+    },
+    "tags": {
+      "description": "Wikilink-style tags e.g. [[Project]]",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Arbitrary structured metadata",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "content": {
+      "description": "The spore's content text",
+      "title": "Content",
+      "type": "string"
+    },
+    "context_recap": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Session recap for handoff spores",
+      "title": "Context Recap"
+    },
+    "created_at": {
+      "description": "Creation timestamp (UTC)",
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "description": "Last update timestamp (UTC)",
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "origin_pop": {
+      "description": "Device ID that created this spore e.g. osx-desktop, android-phone",
+      "title": "Origin Pop",
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "content",
+    "origin_pop"
+  ],
+  "title": "Spore",
+  "type": "object"
+}
