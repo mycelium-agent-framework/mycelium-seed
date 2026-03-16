@@ -116,19 +116,6 @@
           "title": "Repo Url",
           "type": "string"
         },
-        "local_path_hint": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Suggested local clone path",
-          "title": "Local Path Hint"
-        },
         "access_rules": {
           "additionalProperties": {
             "items": {
